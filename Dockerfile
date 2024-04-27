@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8000
 
 # Define environment variable for gunicorn
-ENV GUNICORN_CMD_ARGS="--bind=0.0.0.0:8000 --workers=3"
+ENV GUNICORN_CMD_ARGS="--bind=0.0.0.0:8000 --workers=1"
 
 # Run gunicorn when the container launches
 CMD ["gunicorn", "app:app"]
