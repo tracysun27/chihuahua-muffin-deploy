@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"
+    ></script>
+    <meta charset="utf-8" />
+    <title>Are you a Chihuahua or a Muffin?</title>
+    <style>
+      /* CSS styles for center alignment and button customization */
+      body {
+        text-align: center;
+        /* Center align the content */
+        background-image: url("https://cdn-media-1.freecodecamp.org/images/1*bt-E2YcPafjiPbZFDMMmNQ.jpeg");
+        /* Set background image */
+        background-size: cover;
+        /* Cover the entire background */
+        background-repeat: repeat;
+        /* Prevent background image from repeating */
+      }
+
+      button {
+        font-family: Comic Sans MS;
+        /* Set font family for the button */
+        font-size: 20px;
+        /* Increase font size */
+        color: rgb(146, 9, 92);
+        padding: 10px 20px;
+        /* Increase padding to make the button bigger */
+        background-color: lavenderblush;
+        /* Change background color of the button */
+        border: none;
+        /* Remove border */
+        cursor: pointer;
+        /* Add cursor pointer on hover */
+      }
+
+      button:hover {
+        background-color: violet;
+        /* Change background color on hover */
+      }
+
+      h1 {
+        font-family: Comic Sans MS;
+        /* Set font family for h1 */
+        /* font-size: 36px; */
+        /* Set font size for h1 */
+        color: rgb(243, 29, 158);
+        /* Set text color for h1 */
+        background-color: rgba(239, 208, 228, 0.7);
+        /* Set background color for h1 with opacity */
+        padding: 10px;
+        /* Add padding to the title */
+      }
+
+      h2 {
+        font-family: Comic Sans MS;
+        /* Set font family for h1 */
+        color: rgb(243, 29, 158);
+        /* Set text color for h1 */
+        background-color: rgba(239, 208, 228, 0.7);
+        /* Set background color for h1 with opacity */
+        padding: 10px;
+        /* Add padding to the title */
+      }
+
+      a {
+        font-family: Comic Sans MS;
+        /* Set font family for the link */
+        font-size: 18px;
+        /* Set font size for the link */
+        color: rgb(243, 29, 158);
+        /* Set text color for the link */
+        background-color: rgba(239, 208, 228, 0.7);
+        text-decoration: underline;
+        display: block;
+        /* Make the link a block element to control its placement */
+        margin-top: 10px;
+        /* Add margin to the top to separate it from other elements */
+      }
+
+      a:hover {
+        color: rgb(146, 9, 92);
+        /* Change text color on hover */
+      }
+
+      #webcam {
+        margin: 20px auto;
+        /* Center the webcam */
+        display: block;
+        /* Make the webcam a block element */
+      }
+
+      #canvas {
+        /* make canvas hidden */
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Are you a Chihuahua or a Muffin?</h1>
+    <h2>Take a photo!</h2>
+    <video id="webcam" autoplay playsinline width="640" height="480"></video>
+    <canvas id="canvas" class="d-none"></canvas>
+    <form id="captureForm" action="/capture" method="post">
+      <button type="button" id="captureBtn">Capture Image!</button>
+    </form>
+  </body>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const webcamElement = document.getElementById("webcam");
+      const canvasElement = document.getElementById("canvas");
+      const webcam = new Webcam(webcamElement, "user", canvasElement);
+
+      webcam
+        .start()
+        .then((result) => {
+          console.log("webcam started");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      document
+        .getElementById("captureBtn")
+        .addEventListener("click", function () {
+          // When you want to take a snapshot and send it to the server
+          const picture = webcam.snap();
+          // Convert the image data to a JSON object
+          const imageData = { image: picture };
+
+          // Call the fetch function here
+          fetch("/capture", {
+            // Make sure this matches the Flask route
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(imageData),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              console.log("Success:", data);
+              // Redirect to the results page using the returned data
+              // Assuming 'data' contains the 'img_name' and 'img_path' properties
+              window.location.href = `/results_page?img_name=${data.img_name}&img_path=${data.img_path}`;
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              // Handle errors, such as displaying a message to the user
+            });
+        });
+    });
+  </script>
+</html>

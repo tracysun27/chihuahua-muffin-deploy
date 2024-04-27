@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <title>Results</title>
+  <style>
+    /* CSS for the Results page */
+    body {
+      text-align: center;
+      background-color: lavenderblush; /* Pastel pink color */
+      font-family: 'Comic Sans MS', cursive;
+    }
+    /* Additional styles for other elements if needed */
+    h1 {
+      font-family: Comic Sans MS;
+      color: rgb(243, 29, 158); /* Set text color to white for better contrast */
+    }
+
+    h2 {
+        font-family: Comic Sans MS; /* Set font family for h1 */
+        color: rgb(243, 29, 158); /* Set text color for h1 */
+      }
+      a {
+        font-family: Comic Sans MS; /* Set font family for the link */
+        font-size: 18px; /* Set font size for the link */
+        color: rgb(243, 29, 158); /* Set text color for the link */
+        text-decoration: underline; 
+      }
+      a:hover {
+        color: rgb(146, 9, 92); /* Change text color on hover */
+      }
+  </style>
+</head>
+<body>
+  <h1>Results Page</h1>
+  <h2>Congrats, you are a {{ res }}! </h2>
+  {% if img_name %}
+    <div>
+      <img src="{{url_for('static', filename= img_name)}}" alt="Captured Image" width="400" height="400">
+    </div>
+  {% else %}
+    <p>No image captured yet.</p>
+  {% endif %}
+  <a href="{{ url_for('home') }}">Back to Home</a>
+</body>
+</html>

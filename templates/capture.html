@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Image</title>
+    <style>
+    body {
+      text-align: center;
+      background-color: lavenderblush; 
+      font-family: 'Comic Sans MS';
+    }
+    h1 {
+      font-family: Comic Sans MS;
+      color: rgb(243, 29, 158); /* Set text color to white for better contrast */
+    }
+
+    h2 {
+        font-family: Comic Sans MS; /* Set font family for h1 */
+        color: rgb(243, 29, 158); /* Set text color for h1 */
+      }
+    
+    a {
+        font-family: Comic Sans MS; /* Set font family for the link */
+        font-size: 18px; /* Set font size for the link */
+        color: rgb(243, 29, 158); /* Set text color for the link */
+        text-decoration: underline; 
+      }
+    a:hover {
+        color: rgb(146, 9, 92); /* Change text color on hover */
+      }
+    </style>
+</head>
+<body>
+    <h1>Image Captured!</h1>
+    <img class="captured-image" src="{{ img_path }}" alt="Captured Image" style="width:500px;height:600px;">
+    <p>File Path: {{ img_path }}</p>
+    <a href="{{ url_for('results') }}">View Results</a>
+</body>
+</html>
+

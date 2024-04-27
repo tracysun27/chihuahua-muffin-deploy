@@ -1,0 +1,7 @@
+Flask>=3.0.0
+numpy>=1.22.2
+Pillow==9.2.0
+tensorflow>=2.13.0
+opencv-python==4.9.0.80
+rembg==2.0.56
+gunicorn==22.0.0
