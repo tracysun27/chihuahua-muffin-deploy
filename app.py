@@ -40,14 +40,20 @@ def save_image(image_bytes):
 
     # making it square
     (height, width) = frame.shape[:2]
-    if height < width:
-        frame = frame[
-            0:height, ((width // 2) - (height // 2)) : ((width // 2) + (height // 2))
-        ]
-    else:
-        frame = frame[
-            ((height // 2) - (width // 2)) : ((height // 2) + (width // 2)), 0:width
-        ]
+    # if height < width:
+    #     frame = frame[
+    #         0:height, ((width // 2) - (height // 2)) : ((width // 2) + (height // 2))
+    #     ]
+    # else:
+    #     frame = frame[
+    #         ((height // 2) - (width // 2)) : ((height // 2) + (width // 2)), 0:width
+    #     ]
+    min_dimension = min(height, width)
+    start_x = (width - min_dimension) // 2
+    start_y = (height - min_dimension) // 2
+    end_x = start_x + min_dimension
+    end_y = start_y + min_dimension
+    frame = frame[start_y:end_y, start_x:end_x]
 
     # Construct the image name
     img_name = f'captured_image_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.jpg'
