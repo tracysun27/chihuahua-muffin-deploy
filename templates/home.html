@@ -150,7 +150,7 @@
               console.log("Success:", data);
               // Redirect to the results page using the returned data
               // Assuming 'data' contains the 'img_name' and 'img_path' properties
-              window.location.href = `/results_page?img_name=${data.img_name}&img_path=${data.img_path}`;
+              window.location.href = `/results_page?img_name=${data.img_name}`;
             })
             .catch((error) => {
               console.error("Error:", error);

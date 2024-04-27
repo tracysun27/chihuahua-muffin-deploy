@@ -8,6 +8,7 @@
 
 from flask import Flask, render_template, Response, session, request, jsonify
 from PIL import Image
+from lru import LRU
 import os
 import cv2
 import datetime as dt
@@ -17,15 +18,8 @@ import base64
 from rembg import remove
 
 app = Flask(__name__)
-app.secret_key = "509d5ad1fb502054034e60c79aa439b3"
 # print("App Root Path:", app.root_path)
 # print("Static Folder Path:", app.static_folder)
-
-# version 1: save in desktop folder named "images"
-try:
-    os.mkdir("./static")
-except OSError as error:
-    pass
 
 # # version 2: Images folder path
 # app.config['UPLOAD_FOLDER'] = './static'
@@ -33,16 +27,8 @@ except OSError as error:
 # if not os.path.exists(app.config['UPLOAD_FOLDER'] ):
 #     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-
-def resize_image(height, width):
-    min_dim = min(height, width)
-    if min_dim == height:
-        new_height = height
-        new_width = width // 2
-    else:
-        new_height = height // 2
-        new_width = width
-    return new_height, new_width
+model = tf.saved_model.load("./model_softmax_no_bg3")
+images = LRU(32)
 
 
 # Function to capture and save an image
@@ -63,14 +49,13 @@ def save_image(image_bytes):
             ((height // 2) - (width // 2)) : ((height // 2) + (width // 2)), 0:width
         ]
 
-    # Construct the image name and path
+    # Construct the image name
     img_name = f'captured_image_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.jpg'
-    img_path = f"./static/{img_name}"
 
-    # Save the image to the specified path
-    cv2.imwrite(img_path, frame)
+    # Save the image to the dict
+    images[img_name] = frame
 
-    return img_name, img_path
+    return img_name
 
 
 # # OLD: function for converting captured image into correct dimensions and tensor for model
@@ -83,8 +68,8 @@ def save_image(image_bytes):
 #     return img
 
 
-def preprocess_image(image_path):
-    img = Image.open(image_path)
+def preprocess_image(img_name):
+    img = Image.fromarray(images[img_name])
 
     img = remove(img)
     img = img.convert("RGB")
@@ -100,38 +85,15 @@ def preprocess_image(image_path):
     return img
 
 
-# Function to generate frames from webcam feed
-def generate_frames():
-    vid = cv2.VideoCapture(0)
-    while True:
-        ret, frame = vid.read()
-        if not ret:
-            break
-        else:
-            # my webcam is 1280 by 720. make it square
-            (height, width) = frame.shape[:2]
-            if height < width:
-                frame = frame[
-                    0:height,
-                    ((width // 2) - height // 2) : ((width // 2) + height // 2),
-                ]
-            else:
-                frame = frame[
-                    ((height // 2) - width // 2) : ((height // 2) + width // 2), 0:width
-                ]
-            ret, buffer = cv2.imencode(".jpg", frame)
-            frame = buffer.tobytes()
-            yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-
-
-def run_model(img_path, class_names=["chihuahua", "muffin"]):
-    model = tf.saved_model.load("./model_softmax_no_bg3")
-    test1 = preprocess_image(img_path)
-    res1 = model(test1)
-    if (np.isclose(res1[0][0], 0.56, atol=0.01)) and (res1[0][1] >= 0.5):
+def run_model(img_name, class_names=["chihuahua", "muffin"]):
+    preprocessed_img = preprocess_image(img_name)
+    classification = model(preprocessed_img)
+    if (np.isclose(classification[0][0], 0.56, atol=0.01)) and (
+        classification[0][1] >= 0.5
+    ):
         index = 1
     else:
-        index = np.argmax(res1)
+        index = np.argmax(classification)
     # index = np.argmax(res1)
     # plt.imshow(tf.keras.utils.load_img(img_path))
     return class_names[index]
@@ -148,30 +110,19 @@ def capture():
         image_data = request.json["image"]
         image_data = image_data.split(",")[1]  # Remove the Base64 prefix
         image_bytes = base64.b64decode(image_data)
-        img_name, img_path = save_image(
-            image_bytes
-        )  # Make sure save_image function is defined
+        img_name = save_image(image_bytes)  # Make sure save_image function is defined
         # Return the image name and path in the response
-        return jsonify({"img_name": img_name, "img_path": img_path})
+        return jsonify({"img_name": img_name})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/video_feed")
-def video_feed():
-    return Response(
-        generate_frames(), mimetype="multipart/x-mixed-replace; boundary=frame"
-    )
-
-
 @app.route("/results_page")
 def results():
-    img_path = session.get("img_path", None)
-    res = run_model(img_path)
     img_name = request.args.get("img_name")
-    return render_template(
-        "results.html", img_path=img_path, img_name=img_name, res=res
-    )
+    res = run_model(img_name)
+    base64_img = base64.b64encode(cv2.imencode(".jpg", images[img_name])[1]).decode()
+    return render_template("results.html", base64_img=base64_img, res=res)
 
 
 if __name__ == "__main__":
