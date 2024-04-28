@@ -6,7 +6,7 @@
 
 # for docker, if terminal gives u port 5000 daemon occupied or whatever try going to settings and turning off airplay receiver. idk why that works but it does.
 
-from flask import Flask, render_template, Response, session, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from PIL import Image
 from lru import LRU
 import os
@@ -97,12 +97,14 @@ def run_model(img_name, class_names=["chihuahua", "muffin"]):
     if (np.isclose(classification[0][0], 0.56, atol=0.01)) and (
         classification[0][1] >= 0.5
     ):
+        prob = classification[0][1]
         index = 1
     else:
+        prob = max(classification[0][1], classification[0][0])
         index = np.argmax(classification)
     # index = np.argmax(res1)
     # plt.imshow(tf.keras.utils.load_img(img_path))
-    return class_names[index]
+    return [class_names[index], round(prob.numpy().item(), 3)]
 
 
 @app.route("/")
@@ -128,7 +130,7 @@ def results():
     img_name = request.args.get("img_name")
     res = run_model(img_name)
     base64_img = base64.b64encode(cv2.imencode(".jpg", images[img_name])[1]).decode()
-    return render_template("results.html", base64_img=base64_img, res=res)
+    return render_template("results.html", base64_img=base64_img, res=res[0], prob=res[1])
 
 
 if __name__ == "__main__":
